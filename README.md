@@ -164,9 +164,9 @@ open demo/index.html   # macOS；或直接双击
 
 **演示录屏**（1.5× 速）：
 
-<video src="https://github.com/lonely-dance-lab/flashvsr-hdr-comfyui/raw/main/docs/demo.mp4" controls muted playsinline width="100%"></video>
+<a href="docs/demo.mp4"><img src="docs/demo.webp" alt="FlashVSR 对照台录屏：1↔2 超分分屏、2↔3 HDR 分屏、1·2·3 并排" width="100%"></a>
 
-<sub>录屏为 SDR，HDR 的亮度差在录屏里体现不出来，请在 HDR 屏幕上打开 <code>demo/index.html</code> 或直接播放 <code>demo/3.mp4</code>。播放不了时可 <a href="docs/demo.mp4">下载录屏</a>。</sub>
+<sub>动图为 12 fps 预览，点击查看 <a href="docs/demo.mp4">1920×1162 高清录屏</a>。录屏是 SDR，HDR 的亮度差体现不出来，请在 HDR 屏幕上打开 <code>demo/index.html</code> 或直接播放 <code>demo/3.mp4</code>。</sub>
 
 ## 常见问题
 
@@ -218,7 +218,7 @@ flashvsr-hdr-comfyui/
 │   ├── run_api.py                   # 命令行提交工作流
 │   └── hdr_hlg.sh                   # FFmpeg 版 SDR → HLG HDR
 ├── demo/                            # 本地对比网页 + 3 段演示视频
-├── docs/demo.mp4                    # 对比网页演示录屏
+├── docs/demo.mp4 · demo.webp        # 对比网页演示录屏 / README 动图
 └── docs/images/                     # README 配图
 ```
 
