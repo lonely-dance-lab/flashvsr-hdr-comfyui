@@ -162,22 +162,11 @@ open demo/index.html   # macOS；或直接双击
 
 网页支持 **1 ↔ 2 / 2 ↔ 3 分屏拖动**、**1 · 2 · 3 并排**、同步播放、逐帧（`,` `.`）、0.25× 慢放、2× / 4× 放大平移。仓库内 2、3 号压到约 13 Mbps，原画质版本在 [Releases](https://github.com/lonely-dance-lab/flashvsr-hdr-comfyui/releases/latest) 下载。Firefox 不支持 HEVC，请用 Safari 或 Chrome。
 
-**1 ↔ 2 超分**
+**演示录屏**（1.5× 速）：
 
-<img src="docs/images/compare-split.jpg" alt="左半原片，右半 FlashVSR 超分" width="100%">
+<video src="https://github.com/lonely-dance-lab/flashvsr-hdr-comfyui/raw/main/docs/demo.mp4" controls muted playsinline width="100%"></video>
 
-<sub>左半：原片 1344×768 · 右半：FlashVSR 2× 超分 2688×1536</sub>
-
-**2 ↔ 3 HDR 高亮**
-
-<img src="docs/images/compare-hdr-sim.jpg" alt="左半 SDR 超分，右半 HLG HDR 高亮版，按 HDR 屏幕实际亮度换算的示意图" width="100%">
-
-<sub>左半：SDR 超分 · 右半：HLG HDR 特别亮。<b>示意图</b>：按 HDR 屏幕上 SDR 白 203 尼特（ITU-R BT.2408）、HLG 峰值 1000 尼特换算成普通图片，真实效果请在 HDR 屏幕上播放 <code>demo/3.mp4</code>。</sub>
-
-| 同一帧，HDR 屏幕上 | SDR 超分 | HDR 特别亮 |
-| --- | --- | --- |
-| 平均亮度 | ~16 nits | **~58 nits**（约 3.6×） |
-| 高光（99 分位） | ~141 nits | **~717 nits** |
+<sub>录屏为 SDR，HDR 的亮度差在录屏里体现不出来，请在 HDR 屏幕上打开 <code>demo/index.html</code> 或直接播放 <code>demo/3.mp4</code>。播放不了时可 <a href="docs/demo.mp4">下载录屏</a>。</sub>
 
 ## 常见问题
 
@@ -229,6 +218,7 @@ flashvsr-hdr-comfyui/
 │   ├── run_api.py                   # 命令行提交工作流
 │   └── hdr_hlg.sh                   # FFmpeg 版 SDR → HLG HDR
 ├── demo/                            # 本地对比网页 + 3 段演示视频
+├── docs/demo.mp4                    # 对比网页演示录屏
 └── docs/images/                     # README 配图
 ```
 
