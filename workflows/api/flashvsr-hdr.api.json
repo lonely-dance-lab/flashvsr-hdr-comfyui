@@ -1,0 +1,8 @@
+{
+  "1": {"class_type": "LoadVideo", "inputs": {"file": "input.mp4"}},
+  "2": {"class_type": "GetVideoComponents", "inputs": {"video": ["1", 0]}},
+  "3": {"class_type": "FlashVSRNode", "inputs": {"frames": ["2", 0], "model": "FlashVSR", "mode": "tiny-long", "scale": 2, "tiled_vae": true, "tiled_dit": false, "unload_dit": true, "seed": 0}},
+  "4": {"class_type": "CreateVideo", "inputs": {"images": ["3", 0], "fps": ["2", 2], "audio": ["2", 1], "codec": "h264"}},
+  "5": {"class_type": "SaveVideo", "inputs": {"video": ["4", 0], "filename_prefix": "video/flashvsr_x2", "format": "auto", "format.codec": "auto"}},
+  "7": {"class_type": "HLGHDRSaveVideo", "inputs": {"images": ["3", 0], "fps": ["2", 2], "audio": ["2", 1], "brightness": "特别亮", "crf": 16, "preset": "fast", "filename_prefix": "video/flashvsr_hdr"}}
+}

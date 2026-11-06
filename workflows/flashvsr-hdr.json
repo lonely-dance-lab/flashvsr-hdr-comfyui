@@ -1,0 +1,375 @@
+{
+  "id": "9b60d579-af1a-40c6-ada9-4c0e154e9ff5",
+  "revision": 0,
+  "last_node_id": 7,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadVideo",
+      "pos": [
+        40,
+        120
+      ],
+      "size": [
+        340,
+        480
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadVideo"
+      },
+      "widgets_values": [
+        "input.mp4",
+        "image"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "GetVideoComponents",
+      "pos": [
+        420,
+        120
+      ],
+      "size": [
+        260,
+        90
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            3,
+            8
+          ]
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "links": [
+            4,
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "GetVideoComponents"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 3,
+      "type": "FlashVSRNode",
+      "pos": [
+        720,
+        120
+      ],
+      "size": [
+        340,
+        280
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "frames",
+          "type": "IMAGE",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            5,
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "FlashVSRNode"
+      },
+      "widgets_values": [
+        "FlashVSR",
+        "tiny-long",
+        2,
+        true,
+        false,
+        true,
+        0,
+        "fixed"
+      ]
+    },
+    {
+      "id": 4,
+      "type": "CreateVideo",
+      "pos": [
+        1100,
+        120
+      ],
+      "size": [
+        280,
+        160
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "shape": 7,
+          "link": 3
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CreateVideo"
+      },
+      "widgets_values": [
+        24,
+        "auto",
+        "sRGB",
+        "h264"
+      ]
+    },
+    {
+      "id": 5,
+      "type": "SaveVideo",
+      "pos": [
+        1420,
+        120
+      ],
+      "size": [
+        520,
+        480
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 6
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "SaveVideo"
+      },
+      "widgets_values": [
+        "video/flashvsr_x2",
+        "auto",
+        "auto"
+      ]
+    },
+    {
+      "id": 6,
+      "type": "Note",
+      "pos": [
+        720,
+        440
+      ],
+      "size": [
+        340,
+        420
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "FlashVSR 视频超分 使用说明\n\n1. 左边 Load Video 上传/选择视频\n2. 运行（Queue）\n\n参数：\n- model 必须选 FlashVSR（服务器上只有 v1 权重；选 v1.1 会去 HF 下载）\n- mode：tiny-long 最省显存；tiny 稍快但长视频会爆显存；full 质量最高最吃显存\n- scale：2 或 4。1344×768 输入 4 倍=5376×3072，非常慢且容易爆显存\n- tiled_dit 开启省显存但更慢；unload_dit 开启降低解码峰值\n\n参考：10 秒 1344×768 → 2 倍，约 150 秒，峰值显存约 40G\n输出在 output/video/\n\n本工作流默认值 = 2026-11-06 成功那次：FlashVSR(v1) / tiny-long / scale 2 / tiled_vae 开 / tiled_dit 关 / unload_dit 开 / seed 0 / h264\n\nHDR 输出（右下节点）：\n- 超分结果同时保存一份 HLG HDR（HEVC 10-bit），文件名 flashvsr_hdr_xxxxx.mp4\n- brightness：特别亮 / 标准亮 / 不提亮\n- 要在 HDR 屏幕（MacBook XDR、iPhone）+ Safari/Chrome 上看才会变亮\n- 不需要 HDR 时，右键该节点选 Bypass 即可"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "HLGHDRSaveVideo",
+      "pos": [
+        1420,
+        660
+      ],
+      "size": [
+        520,
+        520
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 7
+        },
+        {
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": 9
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "shape": 7,
+          "link": 8
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "HLGHDRSaveVideo"
+      },
+      "widgets_values": [
+        24,
+        "特别亮",
+        16,
+        "fast",
+        "video/flashvsr_hdr"
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "VIDEO"
+    ],
+    [
+      2,
+      2,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      2,
+      1,
+      4,
+      1,
+      "AUDIO"
+    ],
+    [
+      4,
+      2,
+      2,
+      4,
+      2,
+      "FLOAT"
+    ],
+    [
+      5,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      6,
+      4,
+      0,
+      5,
+      0,
+      "VIDEO"
+    ],
+    [
+      7,
+      3,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      8,
+      2,
+      1,
+      7,
+      2,
+      "AUDIO"
+    ],
+    [
+      9,
+      2,
+      2,
+      7,
+      1,
+      "FLOAT"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8,
+      "offset": [
+        0,
+        0
+      ]
+    }
+  },
+  "version": 0.4
+}

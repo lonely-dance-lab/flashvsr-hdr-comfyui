@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FlashVSR 对照台</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a grading-suite screen. One big viewing stage, transport bar under it, spec strip below. Single dark theme by choice so footage is judged against a neutral dark surround. */
+:root{
+  color-scheme: dark;
+  --ink:#0d1013;        /* surround */
+  --panel:#151a1f;      /* bars, tiles */
+  --line:#272e36;       /* hairlines */
+  --text:#e6e9ec;
+  --muted:#8b949e;
+  --tally:#f0b23a;      /* accent: monitor tally lamp */
+  --hdr:#ffffff;
+  --f-display:"Archivo","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --f-body:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Archivo",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --s-1:12px; --s-2:14px; --s-3:16px; --s-4:22px; --s-5:34px;
+}
+*{box-sizing:border-box}
+html,body{background:var(--ink);color:var(--text)}
+body{
+  font-family:var(--f-body);font-size:var(--s-2);line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 40px;
+}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+h1{font-family:var(--f-display);font-stretch:112%;font-weight:760;font-size:var(--s-5);letter-spacing:-.01em;line-height:1.05;margin:0;text-wrap:balance}
+h1 small{display:block;font-family:var(--f-mono);font-weight:400;font-size:var(--s-1);color:var(--muted);letter-spacing:.06em;margin-bottom:8px;text-transform:uppercase}
+.tabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px}
+.tabs button{font:inherit;font-family:var(--f-display);font-weight:600;font-size:var(--s-2);color:var(--muted);background:none;border:0;border-radius:5px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{background:var(--tally);color:#1a1204}
+.tabs button:hover:not([aria-selected="true"]){color:var(--text)}
+button:focus-visible,input:focus-visible,select:focus-visible,.handle:focus-visible{outline:2px solid var(--tally);outline-offset:2px}
+
+/* Stage */
+.stage{position:relative;width:100%;aspect-ratio:1344/768;max-width:100%;background:#000;border-radius:6px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.layer{position:absolute;inset:0;overflow:hidden}
+.zoom{position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:0 0;will-change:transform}
+.zoom video{width:100%;height:100%;display:block;object-fit:fill;background:#000}
+.layer.a{clip-path:inset(0 calc(100% - var(--pos,50%)) 0 0)}
+.divider{position:absolute;top:0;bottom:0;left:var(--pos,50%);width:0;z-index:3;pointer-events:none}
+.divider::before{content:"";position:absolute;top:0;bottom:0;left:-1px;width:2px;background:var(--tally);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.handle{pointer-events:auto;position:absolute;top:50%;left:0;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--tally);border:0;cursor:ew-resize;display:grid;place-items:center;color:#1a1204;font-family:var(--f-mono);font-size:13px;font-weight:600}
+.tag{position:absolute;top:10px;z-index:4;font-family:var(--f-mono);font-size:var(--s-1);background:rgba(13,16,19,.78);color:var(--text);padding:4px 8px;border-radius:4px;pointer-events:none;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.tag b{font-family:var(--f-display);font-weight:700;color:var(--tally)}
+.tag.l{left:10px}.tag.r{right:10px}
+.stage.pannable{cursor:grab}.stage.panning{cursor:grabbing}
+
+/* Triple */
+.triple{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.tile{position:relative;aspect-ratio:1344/768;background:#000;border-radius:6px;overflow:hidden;touch-action:none;user-select:none}
+.tile .tag{left:8px;top:8px}
+@media (max-width:760px){.triple{grid-template-columns:1fr}}
+
+.err{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:16px;color:var(--muted);font-size:var(--s-2);z-index:5;background:rgba(13,16,19,.85)}
+
+/* Transport */
+.transport{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.btn{font:inherit;font-family:var(--f-display);font-weight:600;color:var(--text);background:#1f252c;border:1px solid var(--line);border-radius:6px;padding:7px 11px;cursor:pointer;min-width:38px;line-height:1.2}
+.btn:hover{border-color:#3a434d}
+.btn.primary{background:var(--tally);color:#1a1204;border-color:var(--tally);min-width:76px}
+.tc{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:var(--s-2);color:var(--text);white-space:nowrap}
+.tc span{color:var(--muted)}
+.scrub{flex:1 1 220px;accent-color:var(--tally);min-width:0}
+.group{display:flex;align-items:center;gap:6px}
+.group label{font-size:var(--s-1);color:var(--muted);letter-spacing:.04em}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:inherit;font-family:var(--f-mono);font-size:var(--s-1);color:var(--muted);background:#1b2026;border:0;padding:7px 9px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:#2b323a;color:var(--tally)}
+
+.hint{font-size:var(--s-1);color:var(--muted);margin:0}
+.hint kbd{font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;color:var(--text)}
+
+/* Specs */
+.specs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.spec{background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.spec h3{margin:0;font-family:var(--f-display);font-weight:700;font-size:var(--s-3);display:flex;align-items:baseline;gap:8px}
+.spec h3 .n{font-family:var(--f-mono);font-size:var(--s-1);color:#1a1204;background:var(--tally);border-radius:3px;padding:1px 6px}
+.spec dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:var(--s-1)}
+.spec dt{color:var(--muted)}
+.spec dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;margin-left:4px;color:var(--muted)}
+.pill.hdr{border-color:var(--hdr);color:var(--hdr)}
+@media (max-width:760px){.specs{grid-template-columns:1fr}}
+
+.note{border-left:2px solid var(--tally);padding:2px 0 2px 12px;max-width:72ch;color:var(--muted);font-size:var(--s-2)}
+.note strong{color:var(--text);font-weight:600}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1><small>FlashVSR · tiny-long · 2× · HLG</small>FlashVSR 对照台</h1>
+    <div class="tabs" role="tablist" aria-label="对比方式">
+      <button role="tab" id="tab-12" aria-selected="true" data-view="12">1 ↔ 2 超分</button>
+      <button role="tab" id="tab-23" aria-selected="false" data-view="23">2 ↔ 3 HDR</button>
+      <button role="tab" id="tab-123" aria-selected="false" data-view="123">1 · 2 · 3 并排</button>
+    </div>
+  </header>
+
+  <section id="view-wipe" aria-label="分屏对比">
+    <div class="stage" id="stage">
+      <div class="layer b"><div class="zoom" id="slotB"></div></div>
+      <div class="layer a" id="layerA"><div class="zoom" id="slotA"></div></div>
+      <div class="divider" id="divider"><button class="handle" id="handle" aria-label="拖动分割线，方向键微调">⇔</button></div>
+      <div class="tag l" id="tagA"></div>
+      <div class="tag r" id="tagB"></div>
+    </div>
+  </section>
+
+  <section id="view-triple" class="triple" aria-label="三路并排" hidden>
+    <div class="tile" data-slot="1"><div class="zoom"></div><div class="tag"><b>1</b>原片</div></div>
+    <div class="tile" data-slot="2"><div class="zoom"></div><div class="tag"><b>2</b>超分</div></div>
+    <div class="tile" data-slot="3"><div class="zoom"></div><div class="tag"><b>3</b>超分 + HDR</div></div>
+  </section>
+
+  <div class="transport">
+    <button class="btn primary" id="play">播放</button>
+    <button class="btn" id="prev" aria-label="上一帧">◀︎|</button>
+    <button class="btn" id="next" aria-label="下一帧">|▶︎</button>
+    <div class="tc" id="tc">00:00:00:00 <span>· 帧 1 / 243</span></div>
+    <input class="scrub" id="scrub" type="range" min="0" max="10.125" step="0.041667" value="0" aria-label="进度">
+    <div class="group"><label>速度</label>
+      <div class="seg" id="speed">
+        <button data-v="0.25" aria-pressed="false">0.25×</button>
+        <button data-v="0.5" aria-pressed="false">0.5×</button>
+        <button data-v="1" aria-pressed="true">1×</button>
+      </div>
+    </div>
+    <div class="group"><label>放大</label>
+      <div class="seg" id="zoom">
+        <button data-v="1" aria-pressed="true">1×</button>
+        <button data-v="2" aria-pressed="false">2×</button>
+        <button data-v="4" aria-pressed="false">4×</button>
+      </div>
+    </div>
+    <button class="btn" id="mute" aria-pressed="true">静音</button>
+  </div>
+  <p class="hint">分屏模式下拖动画面或黄色把手移动分割线；放大后拖动画面平移，三个视频看的是同一块区域。快捷键 <kbd>空格</kbd> 播放暂停，<kbd>,</kbd> <kbd>.</kbd> 逐帧，<kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> 切换模式。</p>
+
+  <div class="specs">
+    <div class="spec"><h3><span class="n">1</span>原片</h3>
+      <dl><dt>分辨率</dt><dd>1344 × 768</dd><dt>编码</dt><dd>H.264 · 8-bit</dd><dt>色彩</dt><dd>SDR <span class="pill">BT.709</span></dd><dt>帧</dt><dd>243 · 24 fps</dd></dl></div>
+    <div class="spec"><h3><span class="n">2</span>FlashVSR 超分</h3>
+      <dl><dt>分辨率</dt><dd>2688 × 1536</dd><dt>编码</dt><dd>H.264 · 8-bit</dd><dt>色彩</dt><dd>SDR <span class="pill">BT.709</span></dd><dt>参数</dt><dd>v1 · tiny-long · 2× · 约 150 s</dd></dl></div>
+    <div class="spec"><h3><span class="n">3</span>超分 + HDR</h3>
+      <dl><dt>分辨率</dt><dd>2688 × 1536</dd><dt>编码</dt><dd>HEVC Main 10</dd><dt>色彩</dt><dd>HLG <span class="pill hdr">BT.2020</span></dd><dt>处理</dt><dd>FFmpeg 曲线提亮 · 高光到 1022</dd></dl></div>
+  </div>
+
+  <p class="note"><strong>3 号是 HLG HDR 视频。</strong>需要 HDR 屏幕（MacBook Pro XDR、iPhone）加 Safari 或 Chrome 才会明显变亮；普通显示器和截图上看，和 2 号差不多。Firefox 不支持 HEVC，3 号会无法播放。仓库里的 2、3 号压到了约 13 Mbps，原画质版本在 Releases 页面下载。</p>
+</div>
+
+<script>
+const SRC = { 1: "1.mp4", 2: "2.mp4", 3: "3.mp4" };
+const FPS = 24;
+const META = {1:"原片",2:"超分",3:"超分 + HDR"};
+
+const vids = {};
+for (const k of [1,2,3]) {
+  const v = document.createElement("video");
+  v.playsInline = true; v.muted = true; v.preload = "auto"; v.loop = false;
+  v.setAttribute("playsinline","");
+  if (SRC[k]) v.src = SRC[k];
+  v.addEventListener("error", () => showErr(v, k));
+  vids[k] = v;
+}
+const master = vids[2];
+
+function showErr(v, k){
+  const host = v.parentElement && v.parentElement.parentElement;
+  if (!host || host.querySelector(".err")) return;
+  const d = document.createElement("div"); d.className = "err";
+  d.textContent = k === 3 ? "这个浏览器播放不了 HEVC 视频。请用 Safari 或 Chrome 打开。" : "视频加载失败，请刷新页面重试。";
+  host.appendChild(d);
+}
+if (!SRC[1] && !SRC[2] && !SRC[3]) {
+  const s = document.getElementById("stage");
+  const d = document.createElement("div"); d.className="err"; d.textContent="视频正在上传，稍后刷新页面。"; s.appendChild(d);
+}
+
+const state = { view:"12", pos:50, zoom:1, cx:.5, cy:.5, playing:false };
+const stage = document.getElementById("stage");
+const slotA = document.getElementById("slotA"), slotB = document.getElementById("slotB");
+const tagA = document.getElementById("tagA"), tagB = document.getElementById("tagB");
+const viewWipe = document.getElementById("view-wipe"), viewTriple = document.getElementById("view-triple");
+
+function active(){ return state.view==="12"?[1,2]:state.view==="23"?[2,3]:[1,2,3]; }
+
+function setView(view){
+  const t = master.currentTime || 0;
+  const was = state.playing;
+  state.view = view;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view===view)));
+  document.querySelectorAll(".err").forEach(e => { if (!e.textContent.startsWith("视频正在")) e.remove(); });
+  if (view === "123") {
+    viewWipe.hidden = true; viewTriple.hidden = false;
+    viewTriple.querySelectorAll(".tile").forEach(tile => tile.querySelector(".zoom").appendChild(vids[tile.dataset.slot]));
+  } else {
+    viewTriple.hidden = true; viewWipe.hidden = false;
+    const [a,b] = view==="12"?[1,2]:[2,3];
+    slotA.replaceChildren(vids[a]); slotB.replaceChildren(vids[b]);
+    tagA.innerHTML = `<b>${a}</b>${META[a]}`; tagB.innerHTML = `<b>${b}</b>${META[b]}`;
+  }
+  for (const k of [1,2,3]) { if (!active().includes(k)) vids[k].pause(); vids[k].currentTime = t; }
+  applyZoom();
+  if (was) play();
+}
+
+/* transport */
+const playBtn = document.getElementById("play");
+function play(){ state.playing = true; playBtn.textContent="暂停"; active().forEach(k => vids[k].play().catch(()=>{})); }
+function pause(){ state.playing = false; playBtn.textContent="播放"; [1,2,3].forEach(k => vids[k].pause()); syncAll(); }
+playBtn.onclick = () => state.playing ? pause() : play();
+
+function seek(t){
+  const d = master.duration || 10.125;
+  t = Math.max(0, Math.min(d - 1/FPS, t));
+  [1,2,3].forEach(k => { vids[k].currentTime = t; });
+}
+function step(n){ pause(); seek(Math.round(master.currentTime*FPS + n)/FPS + 0.001); }
+document.getElementById("prev").onclick = () => step(-1);
+document.getElementById("next").onclick = () => step(1);
+const scrub = document.getElementById("scrub");
+scrub.addEventListener("input", () => seek(parseFloat(scrub.value)));
+master.addEventListener("loadedmetadata", () => { scrub.max = master.duration; });
+master.addEventListener("ended", () => { seek(0); if (state.playing) play(); });
+
+function syncAll(){ const t = master.currentTime; active().forEach(k => { const v=vids[k]; if (v!==master && Math.abs(v.currentTime - t) > 0.001) v.currentTime = t; }); }
+
+const tc = document.getElementById("tc");
+function pad(n){ return String(n).padStart(2,"0"); }
+function tick(){
+  const t = master.currentTime || 0;
+  if (state.playing) {
+    active().forEach(k => { const v=vids[k]; if (v!==master && Math.abs(v.currentTime - t) > 0.05) v.currentTime = t; if (v.paused && !master.paused) v.play().catch(()=>{}); });
+  }
+  const f = Math.floor(t*FPS + 1e-4);
+  tc.innerHTML = `00:00:${pad(Math.floor(f/FPS))}:${pad(f%FPS)} <span>· 帧 ${Math.min(f+1,243)} / 243</span>`;
+  if (document.activeElement !== scrub) scrub.value = t;
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+document.querySelectorAll("#speed button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#speed button").forEach(x => x.setAttribute("aria-pressed", String(x===b)));
+  [1,2,3].forEach(k => vids[k].playbackRate = parseFloat(b.dataset.v));
+});
+document.querySelectorAll("#zoom button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#zoom button").forEach(x => x.setAttribute("aria-pressed", String(x===b)));
+  state.zoom = parseFloat(b.dataset.v); applyZoom();
+});
+const muteBtn = document.getElementById("mute");
+muteBtn.onclick = () => {
+  const m = muteBtn.getAttribute("aria-pressed") !== "true";
+  muteBtn.setAttribute("aria-pressed", String(m)); muteBtn.textContent = m ? "静音" : "有声";
+  [1,3].forEach(k => vids[k].muted = true); master.muted = m;
+};
+
+/* zoom & pan, shared as a normalized center so every view looks at the same region */
+function clampCenter(){
+  const h = 0.5/state.zoom;
+  state.cx = Math.min(1-h, Math.max(h, state.cx));
+  state.cy = Math.min(1-h, Math.max(h, state.cy));
+}
+function applyZoom(){
+  clampCenter();
+  const z = state.zoom;
+  document.querySelectorAll(".zoom").forEach(el => {
+    const W = el.offsetWidth, H = el.offsetHeight;
+    el.style.transform = `translate(${W/2 - state.cx*W*z}px, ${H/2 - state.cy*H*z}px) scale(${z})`;
+  });
+  stage.classList.toggle("pannable", z > 1);
+  document.querySelectorAll(".tile").forEach(t => t.style.cursor = z>1 ? "grab" : "default");
+}
+window.addEventListener("resize", applyZoom);
+
+function setPos(p){ state.pos = Math.max(0, Math.min(100, p)); stage.style.setProperty("--pos", state.pos + "%"); }
+setPos(50);
+
+function dragSurface(el, isStage){
+  let mode = null, sx=0, sy=0, scx=0, scy=0;
+  el.addEventListener("pointerdown", e => {
+    if (e.button !== 0) return;
+    const r = el.getBoundingClientRect();
+    const onHandle = e.target.closest && e.target.closest(".handle");
+    if (isStage && (onHandle || state.zoom === 1)) { mode = "wipe"; setPos((e.clientX - r.left)/r.width*100); }
+    else if (state.zoom > 1) { mode = "pan"; sx=e.clientX; sy=e.clientY; scx=state.cx; scy=state.cy; el.classList.add("panning"); }
+    else return;
+    el.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  el.addEventListener("pointermove", e => {
+    if (!mode) return;
+    const r = el.getBoundingClientRect();
+    if (mode === "wipe") setPos((e.clientX - r.left)/r.width*100);
+    else { state.cx = scx - (e.clientX - sx)/(r.width*state.zoom); state.cy = scy - (e.clientY - sy)/(r.height*state.zoom); applyZoom(); }
+  });
+  const end = () => { mode = null; el.classList.remove("panning"); };
+  el.addEventListener("pointerup", end); el.addEventListener("pointercancel", end);
+}
+dragSurface(stage, true);
+document.querySelectorAll(".tile").forEach(t => dragSurface(t, false));
+
+document.getElementById("handle").addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") { setPos(state.pos - 2); e.preventDefault(); }
+  if (e.key === "ArrowRight") { setPos(state.pos + 2); e.preventDefault(); }
+});
+
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setView(b.dataset.view));
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input,select,textarea")) return;
+  if (e.key === " ") { e.preventDefault(); state.playing ? pause() : play(); }
+  else if (e.key === ",") step(-1);
+  else if (e.key === ".") step(1);
+  else if (e.key === "1") setView("12");
+  else if (e.key === "2") setView("23");
+  else if (e.key === "3") setView("123");
+});
+
+setView("12");
+</script>
+</body>
+</html>
